@@ -1,125 +1,171 @@
 new Vue({
 	el: '#app',
 	data: {
-		currAngle: -12,
-		myp5: null
+		currAngle: 0,
+		myp5: null,
+		allowRotate: true,
+		gameOver: false,
+		inGame: false,
+		timeLimit: 5,
+		timer: null
+	},
+	watch: {
+		currAngle(val) {
+			if (val !== 0) {
+				if (!this.inGame) {
+					this.inGame = true
+					this.timer = setInterval(() => {
+						this.timeLimit -= 1
+					}, 1000)
+				}
+			}
+		},
+		timeLimit(val) {
+			if (val <= 0) {
+				clearInterval(this.timer)
+				this.gameOver = true
+			}
+		}
 	},
 	methods: {
+		restartGame() {
+			window.location.reload()
+		},
 		initGame() {
+			let bod = document.getElementsByTagName('body')[0]
+			bod.addEventListener('click', function () {
+				_this.allowRotate = true
+			})
 			let _this = this
 
 			function sketchInit(sketch) {
 				let engine
 				let world
-				let sand = []
-				let top
-				let bottom
 				let stack
+				let sand = []
 				let pixels = []
 				let pixels2 = []
+				const SAND_COUNT = 220
+				const SAND_SIZE = 10
+				const PIXEL_SIZE = 20
+				const Engine = Matter.Engine
+				const Render = Matter.Render
+				const World = Matter.World
+				const Bodies = Matter.Bodies
+				const Composite = Matter.Composite
+				const Events = Matter.Events
 				const LEFT_SIDE = [{
-						x: -20,
+						x: -40,
 						y: -20
-					},
-					{
-						x: -20,
-						y: 0
 					},
 					{
 						x: -40,
 						y: 0
 					},
 					{
-						x: -40,
-						y: -20
-					},
-					{
-						x: -40,
-						y: -40
-					},
-					{
-						x: -40,
-						y: 20
-					},
-					{
 						x: -60,
-						y: 20
+						y: 0
 					},
-					{
-						x: -60,
-						y: 40
-					},
+					// {
+					// 	x: -60,
+					// 	y: -20
+					// },
 					{
 						x: -60,
 						y: -40
 					},
 					{
 						x: -60,
-						y: -60
+						y: 20
 					},
 					{
 						x: -80,
-						y: -80
-					},
-					{
-						x: -80,
-						y: -60
-					},
-					{
-						x: -80,
-						y: 60
+						y: 20
 					},
 					{
 						x: -80,
 						y: 40
+					},
+					{
+						x: -80,
+						y: -40
+					},
+					{
+						x: -80,
+						y: -60
 					},
 					{
 						x: -100,
+						y: -80
+					},
+					{
+						x: -100,
+						y: -60
+					},
+					{
+						x: -100,
+						y: 60
+					},
+					{
+						x: -100,
+						y: 40
+					},
+					{
+						x: -120,
 						y: -100
 					},
+					// {
+					// 	x: -120,
+					// 	y: -80
+					// },
 					{
-						x: -100,
-						y: -80
-					},
-					{
-						x: -100,
+						x: -120,
 						y: 60
 					},
 					{
-						x: -100,
+						x: -120,
 						y: 80
 					},
 					{
-						x: -100,
+						x: -120,
 						y: 100
 					},
 					{
-						x: -100,
+						x: -120,
 						y: 120
 					},
 					{
-						x: -100,
+						x: -120,
 						y: 140
 					},
 					{
-						x: -100,
+						x: -120,
 						y: 160
 					},
+
 					{
-						x: -100,
+						x: -120,
 						y: -120
 					},
 					{
-						x: -100,
+						x: -120,
 						y: -140
 					},
 					{
-						x: -100,
+						x: -120,
 						y: -160
 					},
 					{
-						x: -100,
+						x: -120,
 						y: -180
+					},
+					{
+						x: -140,
+						y: 200
+					},
+					{
+						x: -140,
+						y: -220
 					}
 				]
 				const RIGHT_SIDE = [{
@@ -150,18 +196,18 @@ new Vue({
 						x: 60,
 						y: 20
 					},
-					{
-						x: 80,
-						y: 60
-					},
+					// {
+					// 	x: 80,
+					// 	y: 60
+					// },
 					{
 						x: 80,
 						y: 40
 					},
-					{
-						x: 100,
-						y: 60
-					},
+					// {
+					// 	x: 100,
+					// 	y: 60
+					// },
 					{
 						x: 100,
 						y: 80
@@ -225,20 +271,16 @@ new Vue({
 					{
 						x: 80,
 						y: -80
+					},
+					{
+						x: 120,
+						y: 200
+					},
+					{
+						x: 120,
+						y: -220
 					}
 				]
-				const SAND_COUNT = 140
-				const SAND_SIZE = 5
-				const PIXEL_SIZE = 20
-				const Engine = Matter.Engine
-				const Render = Matter.Render
-				const World = Matter.World
-				const Bodies = Matter.Bodies
-				const Body = Matter.Body
-				const Composite = Matter.Composite
-				const Composites = Matter.Composites
-
-				sketch.preload = function () {}
 
 				sketch.setup = function () {
 					sketch.createCanvas(window.innerWidth, window.innerHeight)
@@ -256,14 +298,44 @@ new Vue({
 					});
 
 					Render.run(render)
+
+					World.add(world, [
+						Bodies.rectangle(window.innerWidth / 2, 0, window.innerWidth, 50, {
+							isStatic: true,
+						}),
+						Bodies.rectangle(window.innerWidth / 2, window.innerHeight, window.innerWidth, 50, {
+							isStatic: true,
+							id: 999
+						}),
+						Bodies.rectangle(window.innerWidth, window.innerHeight / 2, 50, window.innerHeight, {
+							isStatic: true,
+						}),
+						Bodies.rectangle(0, window.innerHeight / 2, 50, window.innerHeight, {
+							isStatic: true,
+						})
+					]);
+
 					stack = Composite.create()
 					sketch.ellipseMode(sketch.RADIUS)
 					sketch.rectMode(sketch.CENTER)
 					for (let x = 0; x < SAND_COUNT; x++) {
-						sand.push(new Sand(sketch.random(-80, 80), sketch.random(-120, -180)))
+						// sand.push(new Sand(sketch.random(-80, 80), sketch.random(-120, -180)))
+						sand.push(new Sand(sketch.random(-100, 80), sketch.random(40, 170)))
 					}
-					top = new Edge(-100, -200, 260, 30)
-					bottom = new Edge(-100, 180, 260, 30)
+					new Edge(-110, -200, 280, PIXEL_SIZE)
+					new Edge(-110, -240, 280, PIXEL_SIZE)
+					new Edge(-110, 180, 280, PIXEL_SIZE)
+					new Edge(-110, 220, 280, PIXEL_SIZE)
+					let sensor = Bodies.rectangle(-20, -170, 260, 190, {
+						label: 'sensor',
+						isStatic: true,
+						isSensor: true,
+						render: {
+							fillStyle: 'transparent',
+						}
+					})
+					World.add(world, sensor)
+					Composite.add(stack, sensor)
 					for (let x = 0; x < LEFT_SIDE.length; x++) {
 						pixels.push(new HourglassPixel(LEFT_SIDE[x].x, LEFT_SIDE[x].y))
 						pixels2.push(new HourglassPixel(RIGHT_SIDE[x].x, RIGHT_SIDE[x].y))
@@ -272,50 +344,55 @@ new Vue({
 						x: window.innerWidth / 2,
 						y: window.innerHeight / 2
 					}, true);
+					Composite.scale(stack, .7, .7, {
+						x: window.innerWidth / 2,
+						y: window.innerHeight / 2
+					}, true)
+
+					Events.on(engine, 'collisionStart', function (event) {
+						const pairs = event.pairs;
+
+						for (var i = 0; i < pairs.length; i++) {
+							var pair = pairs[i];
+							if (pair.bodyA.label === "sand" && pair.bodyB.id == 999) {
+								pair.bodyA.render.fillStyle = '#333'
+								pair.bodyB.render.fillStyle = '#333'
+								_this.gameOver = true
+							}
+							if (!_this.gameOver) {
+								if (pair.bodyA.label === "sensor" || pair.bodyB.label === "sensor") {
+									console.log('sensor');
+								}
+							}
+						}
+					});
+
 					Engine.run(engine)
 				}
 
 				sketch.draw = function () {
 					sketch.clear()
-					// sketch.translate(window.innerWidth / 2, window.innerHeight / 2);
-					// Composite.rotate(stack, Math.sin(_this.currAngle) * 0.01, {
-					Composite.rotate(stack, _this.currAngle * 0.001, {
-						x: window.innerWidth / 2,
-						y: window.innerHeight / 2
-					}, true);
-					// sketch.rotate(sketch.cos(_this.currAngle))
-					for (let x = 0; x < SAND_COUNT; x++) {
-						sand[x].show()
+					if (!_this.gameOver) {
+						Composite.rotate(stack, _this.currAngle * 0.001, {
+							x: window.innerWidth / 2,
+							y: window.innerHeight / 2
+						}, true);
 					}
-					for (let x = 0; x < LEFT_SIDE.length; x++) {
-						pixels[x].show()
-						pixels2[x].show()
-					}
-					top.show()
-					bottom.show()
 				}
 				class Sand {
 					constructor(x, y) {
-						this.body = Bodies.circle(x, y, SAND_SIZE, {
-							restitution: 0,
-							friction: .1,
-							frictionAir: .1,
-							density: 10,
+						this.body = Bodies.rectangle(x, y, SAND_SIZE, SAND_SIZE, {
+							// restitution: .01,
+							// friction: .01,
+							// frictionAir: .1,
+							// density: 10,
+							label: 'sand',
 							render: {
 								fillStyle: '#4a08a0'
 							}
 						})
 						World.add(world, this.body)
 						Composite.add(stack, this.body)
-
-					}
-					show() {
-						// var pos = this.body.position;
-						// sketch.push()
-						// sketch.noStroke()
-						// sketch.fill(255, 0, 0)
-						// sketch.ellipse(pos.x, pos.y, SAND_SIZE)
-						// sketch.pop()
 					}
 				}
 				class Edge {
@@ -333,17 +410,6 @@ new Vue({
 						World.add(world, this.body)
 						Composite.add(stack, this.body)
 					}
-					show() {
-						var pos = this.body.position;
-						// sketch.push()
-						// sketch.noStroke()
-						// // sketch.stroke(0, 0, 0);
-						// // sketch.strokeWeight(11)
-						// sketch.fill(0, 0, 0);
-						// // sketch.rotate(this.body.angle)
-						// sketch.rect(pos.x, pos.y, this.w, this.h)
-						// sketch.pop()
-					}
 				}
 				class HourglassPixel {
 					constructor(x, y) {
@@ -358,17 +424,6 @@ new Vue({
 						})
 						World.add(world, this.pixel)
 						Composite.add(stack, this.pixel)
-
-					}
-					show() {
-						var pos = this.pixel.position;
-						// sketch.push()
-						// // sketch.translate(0, -5)
-						// sketch.fill(0, 0, 0)
-						// sketch.noStroke()
-						// // sketch.rotate(1, [1000, 200])
-						// sketch.rect(pos.x, pos.y, PIXEL_SIZE, PIXEL_SIZE)
-						// sketch.pop()
 					}
 				}
 			}

@@ -1,3 +1,9 @@
+$mainColor: #4a08a0;
+$range-width: 100% !default;
+$range-handle-size: 20px !default;
+$range-track-height: 10px !default;
+$range-label-width: 60px !default;
+
 body {
   background: #f6f6f6;
   background: -moz-linear-gradient(-45deg, #f6f6f6 0%, #d1d1d1 100%);
@@ -11,9 +17,10 @@ body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  color: #ccc;
+  color: rgb(0, 0, 0);
   position: relative;
   font-family: 'VT323', monospace;
+  font-size: 20px;
 
   input {
     font-family: 'VT323', monospace;
@@ -32,16 +39,88 @@ body {
     cursor: pointer;
   }
 
+  #info {
+    position: absolute;
+    top: 10vh;
+    left: 10vw;
+  }
+
+  .range-slider {
+    margin: 60px 0 0 0%;
+    width: $range-width;
+  }
+
+  .range-slider__range {
+    -webkit-appearance: none;
+    width: calc(100% - (#{$range-label-width + 13px}));
+    height: $range-track-height;
+    border-radius: 5px;
+    background: #ccc;
+    outline: none;
+    padding: 0;
+    margin: 0;
+
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: $range-handle-size;
+      height: $range-handle-size;
+      border-radius: 50%;
+      background: #000;
+      cursor: pointer;
+      transition: background .15s ease-in-out;
+
+      &:hover {
+        background: $mainColor;
+      }
+    }
+
+    &:active::-webkit-slider-thumb {
+      background: $mainColor;
+    }
+
+    &::-moz-range-thumb {
+      width: $range-handle-size;
+      height: $range-handle-size;
+      border: 0;
+      border-radius: 50%;
+      background: #000;
+      cursor: pointer;
+      transition: background .15s ease-in-out;
+
+      &:hover {
+        background: $mainColor;
+      }
+    }
+
+  }
+
   #gui {
     position: absolute;
     top: 10%;
     right: 10%;
     z-index: 999;
     text-align: right;
-    font-family: 'Roboto Mono', Courier, monospace;
+  }
+
+  #timeout {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%) scale3d(1, 1, 1) rotate(-10deg);
+    transition: all 1s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    z-index: 999;
+    font-size: 10vw;
+    color: #fff;
+    background-color: rgba(0, 0, 0, .9);
+    padding: 0px 35px;
+    line-height: 1;
+
+    &.shown {
+      opacity: 1;
+      transform: translate(-50%) scale3d(1.3, 1.3, 1) rotate(-1deg);
+
+    }
   }
 }
-
-// canvas:nth-of-type(2) {
-//   opacity: .5 !important;
-// }
