@@ -6,10 +6,22 @@ new Vue({
 		allowRotate: true,
 		gameOver: false,
 		inGame: false,
-		timeLimit: 5,
-		timer: null
+		timeLimit: 11,
+		timer: null,
+		sandColor: '#4a08a0',
+		boundsColor: '#BBBBBB',
+		message: 'TIME OUT!',
+		points: 0,
+		hScale: window.innerHeight / 800
 	},
 	watch: {
+		points(val, newVal) {
+			if (val >= 110 && !this.gameOver) {
+				this.gameOver = true
+				this.message = 'YOU WIN!'
+				clearInterval(this.timer)
+			}
+		},
 		currAngle(val) {
 			if (val !== 0) {
 				if (!this.inGame) {
@@ -24,12 +36,13 @@ new Vue({
 			if (val <= 0) {
 				clearInterval(this.timer)
 				this.gameOver = true
+				this.message = 'TIME OUT!'
 			}
 		}
 	},
 	methods: {
 		restartGame() {
-			window.location.reload()
+			window.location.reload(true)
 		},
 		initGame() {
 			let bod = document.getElementsByTagName('body')[0]
@@ -45,8 +58,8 @@ new Vue({
 				let sand = []
 				let pixels = []
 				let pixels2 = []
-				const SAND_COUNT = 220
-				const SAND_SIZE = 10
+				const SAND_COUNT = 110
+				const SAND_SIZE = 12
 				const PIXEL_SIZE = 20
 				const Engine = Matter.Engine
 				const Render = Matter.Render
@@ -302,31 +315,59 @@ new Vue({
 					World.add(world, [
 						Bodies.rectangle(window.innerWidth / 2, 0, window.innerWidth, 50, {
 							isStatic: true,
+							render: {
+								fillStyle: _this.boundsColor,
+							}
 						}),
 						Bodies.rectangle(window.innerWidth / 2, window.innerHeight, window.innerWidth, 50, {
 							isStatic: true,
-							id: 999
+							id: 999,
+							render: {
+								fillStyle: _this.boundsColor,
+							}
 						}),
 						Bodies.rectangle(window.innerWidth, window.innerHeight / 2, 50, window.innerHeight, {
 							isStatic: true,
+							render: {
+								fillStyle: _this.boundsColor,
+							}
 						}),
 						Bodies.rectangle(0, window.innerHeight / 2, 50, window.innerHeight, {
 							isStatic: true,
+							render: {
+								fillStyle: _this.boundsColor,
+							}
 						})
 					]);
 
 					stack = Composite.create()
-					sketch.ellipseMode(sketch.RADIUS)
-					sketch.rectMode(sketch.CENTER)
-					for (let x = 0; x < SAND_COUNT; x++) {
-						// sand.push(new Sand(sketch.random(-80, 80), sketch.random(-120, -180)))
-						sand.push(new Sand(sketch.random(-100, 80), sketch.random(40, 170)))
-					}
+
 					new Edge(-110, -200, 280, PIXEL_SIZE)
 					new Edge(-110, -240, 280, PIXEL_SIZE)
 					new Edge(-110, 180, 280, PIXEL_SIZE)
 					new Edge(-110, 220, 280, PIXEL_SIZE)
-					let sensor = Bodies.rectangle(-20, -170, 260, 190, {
+					let strongFloor = Bodies.rectangle(-10, 195, 270, 50, {
+						isStatic: true,
+						density: 100,
+						render: {
+							fillStyle: 'transparent',
+						}
+					})
+					let strongWall = Bodies.rectangle(-120, 135, 20, 170, {
+						isStatic: true,
+						density: 100,
+						render: {
+							fillStyle: 'transparent',
+						}
+					})
+					let strongWall2 = Bodies.rectangle(100, 150, 20, 160, {
+						isStatic: true,
+						density: 100,
+						render: {
+							fillStyle: 'transparent',
+						}
+					})
+					let sensor = Bodies.rectangle(-10, -150, 200, 100, {
 						label: 'sensor',
 						isStatic: true,
 						isSensor: true,
@@ -334,8 +375,20 @@ new Vue({
 							fillStyle: 'transparent',
 						}
 					})
-					World.add(world, sensor)
-					Composite.add(stack, sensor)
+					let sensor2 = Bodies.rectangle(-10, 110, 200, 200, {
+						label: 'sensor',
+						isStatic: true,
+						isSensor: true,
+						render: {
+							fillStyle: 'transparent',
+						}
+					})
+					World.add(world, [sensor, sensor2, strongWall, strongWall2, strongFloor])
+					Composite.add(stack, [sensor, sensor2, strongWall, strongWall2, strongFloor])
+					for (let x = 0; x < SAND_COUNT; x++) {
+						// sand.push(new Sand(sketch.random(-80, 80), sketch.random(-120, -180)))
+						sand.push(new Sand(sketch.random(-10, 8) * 10, sketch.random(6, 17) * 10))
+					}
 					for (let x = 0; x < LEFT_SIDE.length; x++) {
 						pixels.push(new HourglassPixel(LEFT_SIDE[x].x, LEFT_SIDE[x].y))
 						pixels2.push(new HourglassPixel(RIGHT_SIDE[x].x, RIGHT_SIDE[x].y))
@@ -344,7 +397,7 @@ new Vue({
 						x: window.innerWidth / 2,
 						y: window.innerHeight / 2
 					}, true);
-					Composite.scale(stack, .7, .7, {
+					Composite.scale(stack, _this.hScale, _this.hScale, {
 						x: window.innerWidth / 2,
 						y: window.innerHeight / 2
 					}, true)
@@ -355,14 +408,27 @@ new Vue({
 						for (var i = 0; i < pairs.length; i++) {
 							var pair = pairs[i];
 							if (pair.bodyA.label === "sand" && pair.bodyB.id == 999) {
-								pair.bodyA.render.fillStyle = '#333'
-								pair.bodyB.render.fillStyle = '#333'
-								_this.gameOver = true
-							}
-							if (!_this.gameOver) {
-								if (pair.bodyA.label === "sensor" || pair.bodyB.label === "sensor") {
-									console.log('sensor');
+								pair.bodyA.render.fillStyle = '#FF0000'
+								pair.bodyB.render.fillStyle = '#FF0000'
+								if (!_this.gameOver) {
+									_this.gameOver = true
+									_this.message = 'Game Over'
+									clearInterval(_this.timer)
 								}
+							}
+						}
+					});
+
+					Events.on(engine, 'collisionEnd', function (event) {
+						var pairs = event.pairs;
+
+						for (var i = 0, j = pairs.length; i != j; ++i) {
+							var pair = pairs[i];
+
+							if (pair.bodyA.label == "sensor") {
+								// _this.sandColor = '#00FF00'
+								_this.points++
+								pair.bodyB.render.fillStyle = _this.sandColor;
 							}
 						}
 					});
@@ -382,13 +448,13 @@ new Vue({
 				class Sand {
 					constructor(x, y) {
 						this.body = Bodies.rectangle(x, y, SAND_SIZE, SAND_SIZE, {
-							// restitution: .01,
-							// friction: .01,
+							restitution: 0,
+							friction: .1,
 							// frictionAir: .1,
-							// density: 10,
+							density: .000001,
 							label: 'sand',
 							render: {
-								fillStyle: '#4a08a0'
+								fillStyle: _this.sandColor
 							}
 						})
 						World.add(world, this.body)
@@ -401,6 +467,7 @@ new Vue({
 							isStatic: true,
 							restitution: 0,
 							friction: 1,
+							density: 10,
 							render: {
 								fillStyle: '#000000'
 							}

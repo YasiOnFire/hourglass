@@ -10,16 +10,21 @@ head
   #app
     #canvas_container
     #info
-      h1|408 Request Timeout The Game
-      p|Use the handle to rotate the hour glass. 
-      p|Watch out! It is broken. Don't let the sand get out.
+      h1
+        |408 Request Timeout <br>
+        small| - The Game
+      p|Use the handle to rotate the hourglass. 
+      p|Watch out! It is broken. 
+      p|Don't let the pixe... sand get out.
       p|Remember - You have limited time.
       button(@click='restartGame()' v-if="gameOver")|Restart
     #gui
-      | Time limit {{ timeLimit }}s
-      div.range-slider
-        input(v-model='currAngle' type='range' min="-20" max="20" class='range-slider__range')
-    #timeout(:class="gameOver ? 'shown' : ''")| TIME OUT!
+      | Time limit:<br>
+      span| {{ timeLimit }}s
+    div.range-slider
+      p|Controler:
+      input(v-model='currAngle' type='range' min="-25" max="25" class='range-slider__range')
+    #timeout(:class="gameOver ? 'shown' : ''")| {{message}}
     
   script(src='https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.17/vue.min.js')
   script(src='https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.min.js')
